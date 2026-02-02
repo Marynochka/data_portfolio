@@ -155,3 +155,94 @@ The SQL analysis is designed to support a future dashboard with:
 - Time-series charts (monthly trends)
 - Geographic maps (delivery performance by state)
 - Ranked tables (seller and category performance)
+
+
+## 🧱 Schema-Level Data Integrity
+
+Data quality controls were implemented directly during database creation using explicit constraints and relational design principles.  
+This reduces the need for downstream structural cleaning and prevents duplicate or orphan records.
+
+### Primary Keys
+
+The following primary keys were defined:
+
+- `customers(customer_id)`
+- `sellers(seller_id)`
+- `products(product_id)`
+- `orders(order_id)`
+- `order_items(order_id, order_item_id)` — composite primary key
+- `payments(order_id, payment_sequential)` — composite primary key
+- `product_category_translation(product_category_name)`
+
+Composite primary keys were used in transactional tables where uniqueness is scoped within an order:
+
+- In `order_items`, `order_item_id` is unique only within each order.
+- In `payments`, `payment_sequential` is unique only within each order.
+
+This design reflects real business logic (multiple items and payments per order) without introducing artificial surrogate IDs.
+
+The following tables intentionally do not define primary keys:
+
+- `reviews` — the raw dataset allows repeated `review_id` values.
+- `geolocation` — duplicate ZIP prefixes are expected and represent multiple coordinate observations.
+
+---
+
+### Foreign Key Constraints
+
+Referential integrity is enforced through foreign key relationships:
+
+- `orders.customer_id → customers.customer_id`
+- `order_items.order_id → orders.order_id`
+- `order_items.product_id → products.product_id`
+- `order_items.seller_id → sellers.seller_id`
+- `payments.order_id → orders.order_id`
+- `reviews.order_id → orders.order_id`
+
+`ON DELETE CASCADE` is applied to dependent transactional tables to ensure relational consistency.
+
+This prevents orphan records and guarantees structural integrity across the database.
+
+---
+
+### Domain Constraints & Data Types
+
+Appropriate data types and validation rules were enforced at schema level:
+
+- `review_score` includes `CHECK (review_score BETWEEN 1 AND 5)`
+- Monetary fields (`price`, `freight_value`, `payment_value`) use `NUMERIC(10,2)`
+- Date columns use `TIMESTAMP`
+- State fields use `CHAR(2)`
+- Product dimensions and weight use `INTEGER`
+
+By enforcing correct data types during database creation, type casting and structural corrections during analysis are minimized.
+
+---
+
+### Indexing Strategy
+
+Indexes were created on frequently joined and filtered columns:
+
+- `customers(customer_unique_id)`
+- `products(product_category_name)`
+- `orders(customer_id)`
+- `orders(order_purchase_timestamp)`
+- `order_items(product_id)`
+- `order_items(seller_id)`
+- `payments(payment_type)`
+- `reviews(order_id)`
+- `reviews(review_score)`
+- `geolocation(geolocation_zip_code_prefix)`
+
+These indexes improve query performance while preserving raw data integrity.
+
+---
+
+Overall, structural integrity is enforced at the database level rather than corrected post hoc during analysis.
+
+## 🔎 Data Validation Findings
+
+A series of structural and business logic validation checks were performed after database creation, including row count verification, timestamp consistency checks, monetary domain validation, and referential integrity review. Minor anomalies were identified (e.g., inconsistent delivery timestamps, zero or negative payments, and missing category translations); however, each issue affects only a very small fraction of the dataset and is not statistically significant.
+
+Raw data was preserved to maintain reproducibility and data lineage. For business analysis (e.g., delivery performance or revenue metrics), logically consistent subsets of the data should be used where necessary. These validation findings are considered when interpreting KPIs to ensure edge cases do not distort analytical conclusions.
+
