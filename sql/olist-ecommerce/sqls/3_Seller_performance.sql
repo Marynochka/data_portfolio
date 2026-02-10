@@ -28,7 +28,7 @@ HAVING COUNT(o.order_status) >= 50
 ORDER BY late_delivery_rate DESC
 LIMIT 20;
 
-
+-- among sellers with at least 500 orders to focus on more established sellers
 SELECT 
     s.seller_id, ROUND(SUM(
     CASE
@@ -56,8 +56,13 @@ SELECT
         ELSE 0
     END
         ), 2) AS late_delivery,
-        COUNT(o.order_status) AS total_orders
-
+        COUNT(o.order_status) AS total_orders,
+        ROUND(SUM(
+    CASE
+        WHEN o.order_delivered_customer_date > o.order_estimated_delivery_date THEN 1
+        ELSE 0
+    END
+        ), 2)*1.0 / COUNT(o.order_status) AS late_delivery_rate
 FROM sellers s 
 LEFT JOIN order_items oi ON s.seller_id = oi.seller_id
 LEFT JOIN orders o ON oi.order_id = o.order_id
@@ -65,7 +70,7 @@ WHERE o.order_status = 'delivered'
 GROUP BY s.seller_id
 HAVING COUNT(o.order_status) >= 50
 ORDER BY late_delivery DESC
-LIMIT 20;
+LIMIT 10;
 
 -- 10. Are high-volume sellers more or less reliable than low-volume sellers?
 

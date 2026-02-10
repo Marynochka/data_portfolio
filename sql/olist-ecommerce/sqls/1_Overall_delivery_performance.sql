@@ -11,17 +11,16 @@ Questions 1–4
 */
 
 --1. Percentage of orders delivered and other status values
-
 SELECT 
-    order_status,
-    COUNT(*) AS order_count,
+order_status AS "ORDER STATUS",
+    COUNT(*) AS "ORDERS",
     ROUND(
         100.0 * COUNT(*) / SUM(COUNT(*)) OVER (),
         3
-    ) AS percentage
+    ) AS "% of Total Orders"
 FROM orders
 GROUP BY order_status
-ORDER BY percentage DESC;
+ORDER BY "% of Total Orders" DESC;
 
 --2. Percentage of orders delivered late
 
@@ -39,7 +38,7 @@ FROM orders
 WHERE order_status = 'delivered';
 
 --3. Average delay (days) for late orders
-SELECT AVG(order_delivered_customer_date::DATE - order_estimated_delivery_date::DATE) AS average_delay_days
+SELECT ROUND(AVG(order_delivered_customer_date::DATE - order_estimated_delivery_date::DATE), 2) AS average_delay_days
 FROM orders
 WHERE order_status = 'delivered'
   AND order_delivered_customer_date > order_estimated_delivery_date;
