@@ -17,34 +17,16 @@ Key tables used:
 - `orders`
 - `order_items`
 - `customers`
+- `geolocations`
 - `sellers`
 - `products`
 - `payments`
 - `reviews`
+- `product_category_translation`
+
 
 ---
 
-## 🎯 Business Objectives
-The main objectives of this analysis are to:
-- Evaluate customer satisfaction using review scores
-- Measure delivery performance and delays
-- Identify patterns linking delivery delays to negative reviews
-- Compare seller performance based on revenue, delivery reliability, and reviews
-
----
-
-## ❓ Business Questions
-This project answers the following questions:
-1. What percentage of orders receive customer reviews?
-2. How does delivery delay affect review scores?
-3. Are late deliveries associated with significantly lower ratings?
-4. Which product categories have the lowest average review scores?
-5. What proportion of orders are delivered late?
-6. What is the average delivery time by customer state?
-7. Which sellers have the highest rate of late deliveries?
-8. Which sellers generate high revenue but receive poor reviews?
-9. Does payment type correlate with delivery delays?
-10. Which factors are most strongly associated with low review scores?
 
 ---
 
@@ -67,7 +49,7 @@ The analysis demonstrates:
 - Common Table Expressions (CTEs)
 - Subqueries
 - Date and time calculations
-- Window functions (`RANK`, `AVG() OVER`, etc.)
+- Window functions
 
 ---
 
@@ -91,18 +73,41 @@ Detailed queries and insights are available in the `sql/` and `insights/` direct
 ---
 
 ## 📁 Repository Structure
+
+
 ```text
 olist-sql-analysis/
 │
 ├── README.md
 ├── figures/
 │   └── schema_diagram.png
-├── sql/
-│   ├── 01_create_tables.sql
-│   ├── 02_constraints.sql
-│   └── 03_analysis_queries.sql
+│
+├── data/
+│   └── base_creation/
+│       ├── insert_data_from_sql.sql
+│       └── schema.sql
+│
+├── sqls/
+│   ├── 0_data_cleaning.sql
+│   ├── 01_Overall_delivery_performance.sql
+│   ├── 02_Geographical_Analysis.sql
+│   ├── 03_Seller_performance.sql
+│   ├── 04_product_category_impact.sql
+│   └── 05_Delivery_delays_and_review.sql
+│
 └── insights/
-    └── business_insights.md
+    ├── data_cleaning.md
+    ├── 01_Overall_delivery_performance.md
+    ├── 02_Geographical_Analysis.md
+    ├── 03_Seller_performance.md
+    ├── 04_product_category_impact.md
+    ├── 05_Delivery_delays_and_review.md
+    └── executive_summary.md
+
+```
+
+
+
 ## ❓ Business Questions (SQL Analysis)
 
 ### 1️⃣ Overall Delivery Performance
@@ -141,22 +146,12 @@ olist-sql-analysis/
 ---
 
 ## 🧠 Analytical Notes
-- Late delivery is defined as orders delivered after the estimated delivery date.
+- Late delivery is defined as orders delivered after the estimated delivery date. 
 - Delivery delay is calculated as:  
   `order_delivered_customer_date - order_estimated_delivery_date`
-- Small sample sizes are filtered using minimum order thresholds.
-- Time-based analyses are aggregated at a monthly level.
+- Only delivered orders have been considered
 
 ---
-
-## 📊 Dashboard Mapping (Future Work)
-The SQL analysis is designed to support a future dashboard with:
-- KPI cards (late delivery rate, average delay)
-- Time-series charts (monthly trends)
-- Geographic maps (delivery performance by state)
-- Ranked tables (seller and category performance)
-
-
 ## 🧱 Schema-Level Data Integrity
 
 Data quality controls were implemented directly during database creation using explicit constraints and relational design principles.  
@@ -240,9 +235,4 @@ These indexes improve query performance while preserving raw data integrity.
 
 Overall, structural integrity is enforced at the database level rather than corrected post hoc during analysis.
 
-## 🔎 Data Validation Findings
-
-A series of structural and business logic validation checks were performed after database creation, including row count verification, timestamp consistency checks, monetary domain validation, and referential integrity review. Minor anomalies were identified (e.g., inconsistent delivery timestamps, zero or negative payments, and missing category translations); however, each issue affects only a very small fraction of the dataset and is not statistically significant.
-
-Raw data was preserved to maintain reproducibility and data lineage. For business analysis (e.g., delivery performance or revenue metrics), logically consistent subsets of the data should be used where necessary. These validation findings are considered when interpreting KPIs to ensure edge cases do not distort analytical conclusions.
 
